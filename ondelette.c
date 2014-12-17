@@ -124,15 +124,34 @@ void affiche_matrice_float(float **im, int hauteur, int largeur)
 
 void ondelette_1d(const float *entree, float *sortie, int nbe)
 {
+  int indice_des_adds;
+  int indice_des_diff;
+  int indice_sortie = 0;
+  int indice_entree = 0;
+  int indice_mid = nbe/2;
 
+  //On stocke les +
+  for(indice_des_adds = 0; indice_des_adds < indice_mid; indice_des_adds++)
+  {
+    sortie[indice_sortie] = (entree[indice_entree] + entree[indice_entree+1])/2; //(X+(X+1))/2
+    indice_sortie++;
+    indice_entree += 2;
+  }
 
+  if(nbe%2) //Si nbe est impair
+  {
+    sortie[indice_sortie] = entree[nbe-1];
+    indice_sortie++;
+  }
+  indice_entree = 0;
 
-
-
-
-
-
-
+  //On stocke les -
+  for(indice_des_diff = 0; indice_des_diff < indice_mid; indice_des_diff++)
+  {
+    sortie[indice_sortie] = (entree[indice_entree]-entree[indice_entree+1])/2; //(X-(X+1))/2
+    indice_sortie++;
+    indice_entree += 2;
+  }
 }
 
 /*
@@ -185,40 +204,55 @@ void ondelette_1d(const float *entree, float *sortie, int nbe)
  * 
  */
 
+
+
 void ondelette_2d(float **image, int hauteur, int largeur)
 {
+  int indice_hauteur;
+  int indice_largeur; 
+  float** image_transposee;
+  float* sortie_largeur;
+  float* sortie_hauteur;
+  ALLOUER(sortie_largeur, largeur);
+  ALLOUER(sortie_hauteur, hauteur);
 
+  while(hauteur > 1 || largeur > 1)
+  {
+    for(indice_hauteur = 0; indice_hauteur < hauteur; indice_hauteur++)
+    {
+      //Ondelette sur la ligne
+      ondelette_1d( image[indice_hauteur], sortie_largeur, largeur);
+      for(indice_largeur = 0; indice_largeur < largeur; indice_largeur++)
+      {
+        image[indice_hauteur][indice_largeur] = sortie_largeur[indice_largeur];
+      }
+    }
+    //Transpose
+    image_transposee = allocation_matrice_float(largeur, hauteur);
+    transposition_matrice(image, image_transposee, hauteur, largeur);
 
+    for(indice_largeur = 0; indice_largeur < largeur; indice_largeur++)
+    {
+      //Ondelette sur la ligne
+      ondelette_1d( image_transposee[indice_largeur], sortie_hauteur, hauteur);
+      for(indice_hauteur = 0; indice_hauteur < hauteur; indice_hauteur++)
+      {
+        image_transposee[indice_largeur][indice_hauteur] = sortie_hauteur[indice_hauteur];
+      }
+    }
+    //Re transpose
+    transposition_matrice(image_transposee, image, largeur, hauteur);
+    hauteur = hauteur%2 + hauteur/2;
+    largeur = largeur%2 + largeur/2;
 
+    liberation_matrice_float(image_transposee, largeur);
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  free(sortie_largeur);
+  free(sortie_hauteur);
 }
+
+
 
 /*
  * Quantification de l'ondelette.
@@ -231,10 +265,21 @@ void ondelette_2d(float **image, int hauteur, int largeur)
 void quantif_ondelette(float **image, int hauteur, int largeur, float qualite)
 {
 
-
-
-
-
+  /*while( qualite >= 1 )
+  {
+    //Quantification
+    for(i = 0; i < hauteur; i++)
+    {
+      for(j = 0; j < largeur; j++)
+      {
+        image[i][j] = image[i][j] / ((1+(i + j +1)) * qualite);
+      }
+    }
+    hauteur /= 2 //modulo;
+    largeur /= 2;
+    qualite /= 8;
+  
+  }*/
 
 
 
@@ -308,54 +353,182 @@ void codage_ondelette(float **image, int hauteur, int largeur, FILE *f)
 
 void ondelette_1d_inverse(const float *entree, float *sortie, int nbe)
 {
+  int i;
+  int k=0;
+  int j=0;
+  int nbe_impaire = nbe%2 + nbe/2.0;
+  int retour;
 
-
-
-
-
-
-
-
-
+  for(i=0;i<nbe_impaire;i++)
+  {
+      retour = nbe_impaire+k;
+      sortie[j] = (entree[i] + entree[retour]);
+      sortie[j+1] = (entree[i] - entree[retour]);
+      j += 2;
+      k++;
+  }
+  if(nbe%2)
+      sortie[j] = entree[nbe_impaire];
 }
 
 
 void ondelette_2d_inverse(float **image, int hauteur, int largeur)
 {
+  // int indice_tab = 0;
+  // int tab_hauteur[hauteur]; // STOCKE HAUTEUR ET LARGEUR BOULET PAS LES 1 ou 0
+  // int tab_largeur[largeur];
+  // int hauteur_temp = hauteur;
+  // int largeur_temp = largeur;
 
+  // tab_hauteur[indice_tab] = hauteur_temp;
+  // tab_largeur[indice_tab] = largeur_temp;
+  // indice_tab++;
 
+  // fprintf(stderr, "\nhauteurMAX: %d\n", hauteur);
+  // fprintf(stderr, "largeurMAX: %d\n", largeur);
 
+  // while(hauteur_temp > 1 || largeur_temp > 1)
+  // {
+  //   hauteur_temp = hauteur_temp%2 + hauteur_temp/2;
+  //   largeur_temp = largeur_temp%2 + largeur_temp/2;
+  //   tab_hauteur[indice_tab] = hauteur_temp;
+  //   tab_largeur[indice_tab] = largeur_temp;
+  //   fprintf(stderr, "hauteur: %d\n", tab_hauteur[indice_tab]);
+  //   fprintf(stderr, "largeur: %d\n", tab_largeur[indice_tab]);
+  //   indice_tab++;
+  // }
+  // indice_tab--;
 
+  // fprintf(stderr, "Fin du while: indice_tab = %d \n", indice_tab);
 
+  // int i;
+  // int j;
+  // int indice_hauteur;
+  // int indice_largeur; 
+  // float** image_transposee;
+  // float* sortie_largeur;
+  // float* sortie_hauteur;
+  // ALLOUER(sortie_largeur, largeur);
+  // ALLOUER(sortie_hauteur, hauteur);
 
+  // do
+  // {
+  //   //On multiplie
+  //   hauteur_temp = tab_hauteur[indice_tab];
+  //   largeur_temp = tab_largeur[indice_tab];
+  //   indice_tab--;
 
+  //   fprintf(stderr, "h_temp: %d   l_temp: %d \n", hauteur_temp, largeur_temp);
 
+  //   //On transpose
+  //   image_transposee = allocation_matrice_float(largeur_temp, hauteur_temp);
+  //   transposition_matrice(image, image_transposee, hauteur_temp, largeur_temp);
+    
+  //   //########################################
+  //   //for(i = 0; i < largeur_temp; i++)
+  //   //{
+  //   //  for(j = 0; j < hauteur_temp; j++)
+  //   //  {
+  //   //    fprintf(stderr, "  %f  ", image[i][j]);
+  //   //  }
+  //   //  fprintf(stderr, "\n");
+  //   //}
+  //   //fprintf(stderr, "\n");
+  //   //for(i = 0; i < hauteur_temp; i++)
+  //   //{
+  //   //  for(j = 0; j < largeur_temp; j++)
+  //   //  {
+  //   //    fprintf(stderr, "  %f  ", image_transposee[i][j]);
+  //   //  }
+  //   //  fprintf(stderr, "\n");
+  //   //}
+  //   //fprintf(stderr, "\n\n");
+  //   //##########################################
 
+  //   for(indice_largeur = 0; indice_largeur < largeur_temp; indice_largeur++)
+  //   {
+  //     //Ondelette sur la ligne
+  //     ondelette_1d_inverse( image_transposee[indice_largeur], sortie_largeur, largeur_temp);
+  //     for(indice_hauteur = 0; indice_hauteur < hauteur_temp; indice_hauteur++)
+  //     {
+  //       image_transposee[indice_hauteur][indice_largeur] = sortie_largeur[indice_largeur];
+  //     }
+  //   }
 
+  //   // for(i = 0; i < largeur_temp; i++)
+  //   // {
+  //   //   for(j = 0; j < hauteur_temp; j++)
+  //   //   {
+  //   //     fprintf(stderr, " %f \n", image[i][j]);
+  //   //   }
+  //   //   fprintf(stderr, "\n\n");
+  //   // }
 
+  //   //Transpose
+  //   transposition_matrice(image_transposee, image, largeur_temp, hauteur_temp);
 
+  //   //########################################
+  //   // for(i = 0; i < largeur_temp; i++)
+  //   // {
+  //   //   for(j = 0; j < hauteur_temp; j++)
+  //   //   {
+  //   //     fprintf(stderr, "  %f  ", image[i][j]);
+  //   //   }
+  //   //   fprintf(stderr, "\n");
+  //   // }
+  //   // fprintf(stderr, "\n");
+  //   // for(i = 0; i < hauteur_temp; i++)
+  //   // {
+  //   //   for(j = 0; j < largeur_temp; j++)
+  //   //   {
+  //   //     fprintf(stderr, "  %f  ", image_transposee[i][j]);
+  //   //   }
+  //   //   fprintf(stderr, "\n");
+  //   // }
+  //   // fprintf(stderr, "\n\n");
+  //   //##########################################
 
+  //   for(indice_hauteur = 0; indice_hauteur < hauteur_temp; indice_hauteur++)
+  //   {
+  //     //Ondelette sur la ligne
+  //     ondelette_1d_inverse( image[indice_hauteur], sortie_hauteur, hauteur_temp);
+  //     for(indice_largeur = 0; indice_largeur < largeur_temp; indice_largeur++)
+  //     {
+  //       image[indice_hauteur][indice_largeur] = sortie_hauteur[indice_largeur];
+  //     }
+  //   }
 
+  //   liberation_matrice_float(image_transposee, largeur);
+  // }
+  // while(indice_tab >= 0);
 
+  // free(sortie_largeur);
+  // free(sortie_hauteur);
 
+  fprintf(stderr, "\nNOUVEAU\n");
+  int hauteurFenetre = 2, largeurFenetre = 2;
+  int hauteurTransposee = largeurFenetre, largeurTransposee = hauteurFenetre;
+  int i;
+  while(hauteurFenetre <= hauteur && largeurFenetre <= largeur)
+  {
+    float** transposee = allocation_matrice_float(hauteurTransposee, largeurTransposee);
+    transposition_matrice(image, transposee, hauteurFenetre, largeurFenetre);
 
+    float** mat_ondelette = allocation_matrice_float(hauteurTransposee, largeurTransposee);
+    for(i = 0; i < hauteurTransposee; i++)
+      ondelette_1d_inverse(transposee[i], mat_ondelette[i], largeurTransposee);
 
+    float** mat = allocation_matrice_float(hauteurFenetre, largeurFenetre);
+    transposition_matrice(mat_ondelette, mat, hauteurTransposee, largeurTransposee);
 
+    for(i = 0; i < hauteurFenetre; i++)
+      ondelette_1d_inverse(mat[i], image[i], largeurFenetre);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    hauteurFenetre *= 2;
+    largeurFenetre *= 2;
+    hauteurTransposee = largeurFenetre;
+    largeurTransposee = hauteurFenetre;
+  }
 
 }
 

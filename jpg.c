@@ -13,18 +13,21 @@
  */
 void dct_image(int inverse, int nbe, float **image)
 {
-  float** DCT_inverse;
-  float** DCT;
+  static float** DCT_inverse;
+  static float** DCT;
   float** image_temp = allocation_matrice_carree_float(nbe);
 
-  //Allocation de la matrice DCT
-  DCT = allocation_matrice_carree_float(nbe);
-  //On la rempli avec les coeff de la DCT
-  coef_dct(nbe, DCT);
-  //DCT inverse
-  DCT_inverse = allocation_matrice_carree_float(nbe);
-  //On transpose
-  transposition_matrice_carree(nbe, DCT, DCT_inverse);
+  if(DCT == NULL)
+  {
+    //Allocation de la matrice DCT
+    DCT = allocation_matrice_carree_float(nbe);
+    //On la rempli avec les coeff de la DCT
+    coef_dct(nbe, DCT);
+    //DCT inverse
+    DCT_inverse = allocation_matrice_carree_float(nbe);
+    //On transpose
+    transposition_matrice_carree(nbe, DCT, DCT_inverse);
+  }
 
   if(inverse)
   {
@@ -36,8 +39,8 @@ void dct_image(int inverse, int nbe, float **image)
     produit_matrices_carrees_float(nbe, DCT, image, image_temp);
     produit_matrices_carrees_float(nbe, image_temp, DCT_inverse, image);
   }
-  liberation_matrice_carree_float(DCT_inverse, nbe);
-  liberation_matrice_carree_float(DCT, nbe);
+  //liberation_matrice_carree_float(DCT_inverse, nbe);
+  //liberation_matrice_carree_float(DCT, nbe);
   liberation_matrice_carree_float(image_temp, nbe);
 }
 
@@ -60,14 +63,8 @@ void quantification(int nbe, int qualite, float **extrait, int inverse)
         extrait[i][j] = extrait[i][j] / ((1+(i + j +1)) * qualite);
     }
   }
-
-
-
-
-
-
-
 }
+
 /*
  * ZIGZAG.
  * On fournit à cette fonction les coordonnées d'un point
@@ -94,24 +91,100 @@ void quantification(int nbe, int qualite, float **extrait, int inverse)
 void zigzag(int nbe, int *y, int *x)
 {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  //Si on est en 0 0
+  if(*y == 0 && *x == 0)
+    (*x)++;
+  //Si on monte ou on va a droite
+  else if( (*y + *x) % 2 == 0)
+  {
+    if(*x+1 >= nbe) //Si on sort de la matrice
+      (*y)++;
+    else
+    { 
+      if(*y != 0)
+        (*y)--;
+      (*x)++;
+    }
+  }
+  //Si on descend ou on va a gauche
+  else
+  {
+    if(*y+1 >= nbe) //Si on sort de la matrice
+      (*x)++;
+    else
+    { 
+      if(*x != 0)
+        (*x)--;
+      (*y)++;
+    }
+  }
 }
+
+/*
+  //Si on est en 0 0
+  if(*y == 0 && *x == 0)
+    (*x)++;
+  //Si on monte ou on va a droite
+  else if( (*y + *x) % 2 == 0)
+  {
+    if(*x+1 >= nbe) //Si on sort de la matrice
+      (*y)++;
+    else if(*y == 0)
+      (*x)++;
+    else
+    {
+      (*x)++;
+      (*y)--;
+    }
+  }
+  //Si on descend ou on va a gauche
+  else
+  {
+    if(*y+1 >= nbe) //Si on sort de la matrice
+      (*x)++;
+    else if(*x == 0)
+      (*y)++;
+    else
+    {
+      (*x)--;
+      (*y)++;
+    }
+  }*/
+
+
+/*
+  //Si on est en 0 0
+  if(*y == 0 && *x == 0)
+    *x = *x + 1;
+  //Si on monte ou on va a droite
+  else if( (*y + *x) % 2 == 0)
+  {
+    if(*x+1 >= nbe) //Si on sort de la matrice
+      *y = *y + 1;
+    else if(*y == 0)
+      *x = *x + 1;
+    else
+    {
+      *x = *x + 1;
+      *y = *y - 1;
+    }
+  }
+  //Si on descend ou on va a gauche
+  else
+  {
+    if(*y+1 >= nbe) //Si on sort de la matrice
+      *x = *x + 1;
+    else if(*x == 0)
+      *y = *y + 1;
+    else
+    {
+      *x = *x - 1;
+      *y = *y + 1;
+    }
+  }
+*/
+
+
 /*
  * Extraction d'une matrice de l'image (le résultat est déjà alloué).
  * La sous-image carrée à la position et de la taille indiquée
