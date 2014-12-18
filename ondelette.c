@@ -61,6 +61,23 @@ void transposition_matrice(float **entree, float **sortie,
       sortie[i][j] = entree[j][i] ;
  }
 
+void affichage_matrice(float **matrice, int hauteur, int largeur)
+{
+  int indice_hauteur;
+  int indice_largeur;
+  for(indice_hauteur = 0; indice_hauteur < hauteur; indice_hauteur++)
+  {
+    for(indice_largeur = 0; indice_largeur < largeur; indice_largeur++)
+    {
+      fprintf(stderr, " %f ", matrice[indice_hauteur][indice_largeur]);
+    }
+    fprintf(stderr, "\n");
+  }
+
+    fprintf(stderr, "\n");
+}
+
+
 /*
  * Cela vous permettra d'écrire plus facilement
  * la matrice de flottant dans un fichier image
@@ -210,6 +227,41 @@ void ondelette_2d(float **image, int hauteur, int largeur)
 {
   int indice_hauteur;
   int indice_largeur; 
+
+  float ** image_ondelette;
+  float ** image_transposee;
+  float ** image_ondelette_transposee;
+
+  while(hauteur > 1 || largeur > 1)
+  {
+    image_ondelette = allocation_matrice_float(hauteur, largeur);
+    for(indice_hauteur = 0; indice_hauteur < hauteur; indice_hauteur++)
+      //Ondelette sur la ligne
+      ondelette_1d( image[indice_hauteur], 
+                    image_ondelette[indice_hauteur], 
+                    largeur);
+    //Transpose
+    image_transposee = allocation_matrice_float(largeur, hauteur);
+    transposition_matrice(image_ondelette, image_transposee, hauteur, largeur);
+
+    image_ondelette_transposee = allocation_matrice_float(largeur, hauteur);
+    for(indice_largeur = 0; indice_largeur < largeur; indice_largeur++)
+      //Ondelette sur la ligne
+      ondelette_1d( image_transposee[indice_largeur], 
+                    image_ondelette_transposee[indice_largeur], 
+                    hauteur);
+    //Re transpose
+    transposition_matrice(image_ondelette_transposee, image, largeur, hauteur);
+    hauteur = hauteur%2 + hauteur/2;
+    largeur = largeur%2 + largeur/2;
+
+    liberation_matrice_float(image_transposee, largeur);
+    liberation_matrice_float(image_ondelette_transposee, largeur);
+    liberation_matrice_float(image_ondelette, hauteur);
+  }
+
+  /*int indice_hauteur;
+  int indice_largeur; 
   float** image_transposee;
   float* sortie_largeur;
   float* sortie_hauteur;
@@ -249,7 +301,7 @@ void ondelette_2d(float **image, int hauteur, int largeur)
   }
 
   free(sortie_largeur);
-  free(sortie_hauteur);
+  free(sortie_hauteur);*/
 }
 
 
@@ -385,52 +437,55 @@ void ondelette_2d_inverse(float **image, int hauteur, int largeur)
   int tab_hauteur[hauteur];
   tab_largeur[0] = largeur;
   tab_hauteur[0] = hauteur;
-  int cpt = 0;
-  while(tab_largeur[cpt] != 1 || tab_hauteur[cpt] != 1)
+  int indice_tab = 0;
+  int indice_hauteur;
+  int indice_largeur;
+  while(tab_largeur[indice_tab] != 1 || tab_hauteur[indice_tab] != 1)
   {
-    cpt++;
-    tab_largeur[cpt] = tab_largeur[cpt-1]/2 + tab_largeur[cpt-1]%2;
-    tab_hauteur[cpt] = tab_hauteur[cpt-1]/2 + tab_hauteur[cpt-1]%2;
+    indice_tab++;
+    tab_largeur[indice_tab] = tab_largeur[indice_tab-1]/2 + tab_largeur[indice_tab-1]%2;
+    tab_hauteur[indice_tab] = tab_hauteur[indice_tab-1]/2 + tab_hauteur[indice_tab-1]%2;
   }
-  cpt--;
-  int hauteur_img = tab_hauteur[cpt], largeur_img = tab_largeur[cpt];
+  indice_tab--;
+
+  int hauteur_img = tab_hauteur[indice_tab], largeur_img = tab_largeur[indice_tab];
   int hauteur_trans = largeur_img, largeur_trans = hauteur_img;
-  int i,j;
-  while(cpt >= 0)
+
+  //fprintf(stderr, "MATRICE IMAGE\n");
+  //affichage_matrice(image, hauteur, largeur);
+
+  while(indice_tab >= 0)
   {
     float** img = allocation_matrice_float(hauteur_img, largeur_img);
-    for(i = 0; i < hauteur_img; i++)
-    {
-      for(j = 0; j < largeur_img; j++)
-        img[i][j] = image[i][j];
-    }
 
     float** transposee = allocation_matrice_float(hauteur_trans, largeur_trans);
-    transposition_matrice(img, transposee, hauteur_img, largeur_img);
+    transposition_matrice(image, transposee, hauteur_img, largeur_img);
 
     float** mat_ondelette = allocation_matrice_float(hauteur_trans, largeur_trans);
-    for(i = 0; i < hauteur_trans; i++)
-      ondelette_1d_inverse(transposee[i], mat_ondelette[i], largeur_trans);
+    for(indice_hauteur = 0; indice_hauteur < hauteur_trans; indice_hauteur++)
+      ondelette_1d_inverse( transposee[indice_hauteur], 
+                            mat_ondelette[indice_hauteur], 
+                            largeur_trans);
 
     float** mat = allocation_matrice_float(hauteur_img, largeur_img);
     transposition_matrice(mat_ondelette, mat, hauteur_trans, largeur_trans);
 
-    for(i = 0; i < hauteur_img; i++)
-      ondelette_1d_inverse(mat[i], img[i], largeur_img);
+    for(indice_hauteur = 0; indice_hauteur < hauteur_img; indice_hauteur++)
+      ondelette_1d_inverse( mat[indice_hauteur], 
+                            img[indice_hauteur], 
+                            largeur_img);
 
-    for(i = 0; i < hauteur_img; i++)
+    for(indice_hauteur = 0; indice_hauteur < hauteur_img; indice_hauteur++)
     {
-      for(j = 0; j < largeur_img; j++)
-        image[i][j] = img[i][j];
+      for(indice_largeur = 0; indice_largeur < largeur_img; indice_largeur++)
+        image[indice_hauteur][indice_largeur] = img[indice_hauteur][indice_largeur];
     }
-    cpt--;
-    hauteur_img = tab_hauteur[cpt];
-    largeur_img = tab_largeur[cpt];
+
+    indice_tab--;
+    hauteur_img = tab_hauteur[indice_tab];
+    largeur_img = tab_largeur[indice_tab];
     hauteur_trans = largeur_img;
     largeur_trans = hauteur_img;
-    //liberation_matrice_float(img, hauteur_img);
-    //liberation_matrice_float(transposee, hauteur_trans);
-    //liberation_matrice_float(mat, hauteur_img);
   }
 }
 

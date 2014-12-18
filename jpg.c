@@ -90,12 +90,25 @@ void quantification(int nbe, int qualite, float **extrait, int inverse)
  */
 void zigzag(int nbe, int *y, int *x)
 {
+  int * x_temp = x;
+  int * y_temp = y;
+  if( (*y + *x) % 2)
+  {
+    x_temp = y;
+    y_temp = x;
+  }
+  if(*x_temp+1 >= nbe) //Si on sort de la matrice
+    (*y_temp)++;
+  else
+  { 
+    if(*y_temp != 0)
+      (*y_temp)--;
+    (*x_temp)++;
+  }
 
-  //Si on est en 0 0
-  if(*y == 0 && *x == 0)
-    (*x)++;
+  /*
   //Si on monte ou on va a droite
-  else if( (*y + *x) % 2 == 0)
+  if( (*y + *x) % 2 == 0)
   {
     if(*x+1 >= nbe) //Si on sort de la matrice
       (*y)++;
@@ -117,72 +130,9 @@ void zigzag(int nbe, int *y, int *x)
         (*x)--;
       (*y)++;
     }
-  }
+  }*/
 }
 
-/*
-  //Si on est en 0 0
-  if(*y == 0 && *x == 0)
-    (*x)++;
-  //Si on monte ou on va a droite
-  else if( (*y + *x) % 2 == 0)
-  {
-    if(*x+1 >= nbe) //Si on sort de la matrice
-      (*y)++;
-    else if(*y == 0)
-      (*x)++;
-    else
-    {
-      (*x)++;
-      (*y)--;
-    }
-  }
-  //Si on descend ou on va a gauche
-  else
-  {
-    if(*y+1 >= nbe) //Si on sort de la matrice
-      (*x)++;
-    else if(*x == 0)
-      (*y)++;
-    else
-    {
-      (*x)--;
-      (*y)++;
-    }
-  }*/
-
-
-/*
-  //Si on est en 0 0
-  if(*y == 0 && *x == 0)
-    *x = *x + 1;
-  //Si on monte ou on va a droite
-  else if( (*y + *x) % 2 == 0)
-  {
-    if(*x+1 >= nbe) //Si on sort de la matrice
-      *y = *y + 1;
-    else if(*y == 0)
-      *x = *x + 1;
-    else
-    {
-      *x = *x + 1;
-      *y = *y - 1;
-    }
-  }
-  //Si on descend ou on va a gauche
-  else
-  {
-    if(*y+1 >= nbe) //Si on sort de la matrice
-      *x = *x + 1;
-    else if(*x == 0)
-      *y = *y + 1;
-    else
-    {
-      *x = *x - 1;
-      *y = *y + 1;
-    }
-  }
-*/
 
 
 /*
