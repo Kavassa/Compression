@@ -316,7 +316,8 @@ void ondelette_2d(float **image, int hauteur, int largeur)
 
 void quantif_ondelette(float **image, int hauteur, int largeur, float qualite)
 {
-  int i,j;
+  int i;
+  int j;
   while( qualite >= 1 )
   {
     //Quantification
@@ -327,7 +328,7 @@ void quantif_ondelette(float **image, int hauteur, int largeur, float qualite)
         image[i][j] = image[i][j] / ((1+(i + j +1)) * qualite);
       }
     }
-    hauteur = hauteur/2 + hauteur%2;//modulo;
+    hauteur = hauteur/2 + hauteur%2;
     largeur = largeur/2 + largeur%2;
     qualite /= 8;
   }
@@ -393,53 +394,37 @@ void codage_ondelette(float **image, int hauteur, int largeur, FILE *f)
 *******************************************************************************
 */
 
-/*void ondelette_1d_inverse(const float *entree, float *sortie, int nbe)
-{
-  int i;
-  int k=0;
-  int j=0;
-  int nbe_impaire = nbe%2 + nbe/2.0;
-  int retour;
-
-  for(i=0;i<nbe_impaire;i++)
-  {
-      retour = nbe_impaire+k;
-      sortie[j] = (entree[i] + entree[retour]);
-      sortie[j+1] = (entree[i] - entree[retour]);
-      j += 2;
-      k++;
-  }
-  if(nbe%2)
-      sortie[j] = entree[nbe_impaire];
-}*/
-
 void ondelette_1d_inverse(const float *entree, float *sortie, int nbe)
 {
-  int i, milieu = nbe/2, indiceSomme = 0, indiceMoyenne = milieu;
-  if(nbe%2 != 0)
+  int indice_sortie = 0;
+  int indice_entree;
+  int milieu = nbe / 2;
+  int milieu_impair = nbe % 2  + nbe / 2;
+  for(indice_entree = 0; indice_entree < milieu; indice_entree++)
   {
-    sortie[nbe-1] = entree[milieu];
-    indiceMoyenne = milieu + 1;
+    sortie[indice_sortie] = entree[indice_entree] + entree[milieu_impair + indice_entree];
+    sortie[indice_sortie + 1] = entree[indice_entree] - entree[milieu_impair + indice_entree];
+    indice_sortie += 2;
   }
-  for(i = 0; i < milieu + 1; i+= 2)
-  {
-    sortie[i] = entree[indiceSomme]+entree[indiceMoyenne];
-    sortie[i+1] = entree[indiceSomme]-entree[indiceMoyenne];
-    indiceSomme++;
-    indiceMoyenne++;
-  }
+  if(nbe % 2 != 0)
+    sortie[indice_sortie] = entree[indice_entree];
 }
 
 
 void ondelette_2d_inverse(float **image, int hauteur, int largeur)
 {
+  float** image_transposee;
+  float** image_transposee_ondelette;
+  float** image_ondelette;
   int tab_largeur[largeur];
   int tab_hauteur[hauteur];
-  tab_largeur[0] = largeur;
-  tab_hauteur[0] = hauteur;
-  int indice_tab = 0;
+  int hauteur_zone;
+  int largeur_zone;
   int indice_hauteur;
-  int indice_largeur;
+  int indice_tab = 0;
+  tab_largeur[indice_tab] = largeur;
+  tab_hauteur[indice_tab] = hauteur;
+
   while(tab_largeur[indice_tab] != 1 || tab_hauteur[indice_tab] != 1)
   {
     indice_tab++;
@@ -448,51 +433,73 @@ void ondelette_2d_inverse(float **image, int hauteur, int largeur)
   }
   indice_tab--;
 
-  int hauteur_img = tab_hauteur[indice_tab], largeur_img = tab_largeur[indice_tab];
-  int hauteur_trans = largeur_img, largeur_trans = hauteur_img;
-
-  //fprintf(stderr, "MATRICE IMAGE\n");
-  //affichage_matrice(image, hauteur, largeur);
-
   while(indice_tab >= 0)
   {
-    float** img = allocation_matrice_float(hauteur_img, largeur_img);
 
-    float** transposee = allocation_matrice_float(hauteur_trans, largeur_trans);
-    transposition_matrice(image, transposee, hauteur_img, largeur_img);
+    hauteur_zone = tab_hauteur[indice_tab];
+    largeur_zone = tab_largeur[indice_tab];
 
-    float** mat_ondelette = allocation_matrice_float(hauteur_trans, largeur_trans);
-    for(indice_hauteur = 0; indice_hauteur < hauteur_trans; indice_hauteur++)
-      ondelette_1d_inverse( transposee[indice_hauteur], 
-                            mat_ondelette[indice_hauteur], 
-                            largeur_trans);
+    image_transposee = allocation_matrice_float(largeur_zone, hauteur_zone);
+    transposition_matrice(image, image_transposee, hauteur_zone, largeur_zone);
 
-    float** mat = allocation_matrice_float(hauteur_img, largeur_img);
-    transposition_matrice(mat_ondelette, mat, hauteur_trans, largeur_trans);
+    image_transposee_ondelette = allocation_matrice_float(largeur_zone, hauteur_zone);
+    for(indice_hauteur = 0; indice_hauteur < largeur_zone; indice_hauteur++)
+      ondelette_1d_inverse( image_transposee[indice_hauteur], 
+                            image_transposee_ondelette[indice_hauteur], 
+                            hauteur_zone);
 
-    for(indice_hauteur = 0; indice_hauteur < hauteur_img; indice_hauteur++)
-      ondelette_1d_inverse( mat[indice_hauteur], 
-                            img[indice_hauteur], 
-                            largeur_img);
+    image_ondelette = allocation_matrice_float(hauteur_zone, largeur_zone);
+    transposition_matrice(image_transposee_ondelette, image_ondelette, largeur_zone, hauteur_zone);
 
-    for(indice_hauteur = 0; indice_hauteur < hauteur_img; indice_hauteur++)
-    {
-      for(indice_largeur = 0; indice_largeur < largeur_img; indice_largeur++)
-        image[indice_hauteur][indice_largeur] = img[indice_hauteur][indice_largeur];
-    }
-
+    for(indice_hauteur = 0; indice_hauteur < hauteur_zone; indice_hauteur++)
+      ondelette_1d_inverse( image_ondelette[indice_hauteur], 
+                            image[indice_hauteur], 
+                            largeur_zone);
     indice_tab--;
-    hauteur_img = tab_hauteur[indice_tab];
-    largeur_img = tab_largeur[indice_tab];
-    hauteur_trans = largeur_img;
-    largeur_trans = hauteur_img;
+
+    liberation_matrice_float(image_transposee, largeur_zone);
+    liberation_matrice_float(image_transposee_ondelette, largeur_zone);
+    liberation_matrice_float(image_ondelette, hauteur_zone);
   }
 }
 
 
 void dequantif_ondelette(float **image, int hauteur, int largeur, float qualite)
-{
-  
+{ 
+  int i;
+  int j;
+  int hauteur_zone;
+  int largeur_zone;
+  int tab_largeur[largeur];
+  int tab_hauteur[hauteur];
+  int indice_tab = 0;
+  tab_largeur[indice_tab] = largeur;
+  tab_hauteur[indice_tab] = hauteur;
+
+  while(tab_largeur[indice_tab] != 1 || tab_hauteur[indice_tab] != 1)
+  {
+    indice_tab++;
+    tab_largeur[indice_tab] = tab_largeur[indice_tab-1]/2 + tab_largeur[indice_tab-1]%2;
+    tab_hauteur[indice_tab] = tab_hauteur[indice_tab-1]/2 + tab_hauteur[indice_tab-1]%2;
+  }
+  indice_tab--;
+
+  while(indice_tab >= 0)
+  {
+    hauteur_zone = tab_hauteur[indice_tab];
+    largeur_zone = tab_largeur[indice_tab]; 
+    
+    for(i = 0; i < hauteur_zone; i++)
+    {
+      for(j = 0; j < largeur_zone; j++)
+      {
+        image[i][j] = image[i][j] * ((1+(i + j +1)) / qualite);
+      }
+    }
+    qualite *= 8;
+
+    indice_tab--;
+  }
   
 }
 

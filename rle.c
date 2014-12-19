@@ -79,7 +79,6 @@ void decompresse(struct intstream *entier, struct intstream *entier_signe
 		 , int nbe, float *dct)
 {
 	int nb_zero;
-	int valeur_entier_signe;
 	int indice_dct;
 	for(indice_dct = 0; indice_dct < nbe; indice_dct++)
 	{
